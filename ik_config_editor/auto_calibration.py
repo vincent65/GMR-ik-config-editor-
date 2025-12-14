@@ -15,10 +15,13 @@ class AutoCalibration:
     ) -> np.ndarray:
         """Calculate rotation offset quaternion between source and target orientations.
 
-        The offset quaternion q_offset transforms target to source:
-            q_source = q_offset * q_target
+        The offset quaternion q_offset is used during retargeting:
+            q_robot_target = q_human_current * q_offset
 
-        Therefore: q_offset = q_source * q_target^{-1}
+        When human is at rest pose (q_source), applying offset gives target rest pose:
+            q_source * q_offset = q_source * (q_source^{-1} * q_target) = q_target
+
+        Therefore: q_offset = q_source^{-1} * q_target
 
         Args:
             source_orientation: Source orientation as quaternion [w, x, y, z]
@@ -37,7 +40,7 @@ class AutoCalibration:
             target_orientation[3], target_orientation[0]
         ])
 
-        # Calculate offset: q_offset = q_source * q_target^{-1}
+        # Calculate offset: q_offset = q_source^{-1} * q_target
         offset_rot = source_rot.inv() * target_rot
 
         # Convert back to [w, x, y, z] format

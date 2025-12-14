@@ -88,7 +88,7 @@ Enable the Phase 2 automatic features:
 
 1. **☑ Auto-calculate rotation offsets** (HIGHLY RECOMMENDED)
    - Calculates the rotation offset quaternion for each body pair
-   - Formula: `q_offset = q_source * q_target^(-1)`
+   - Formula: `q_offset = q_source^(-1) * q_target`
    - Ensures proper alignment between robot coordinate frames
 
 2. **☑ Auto-calculate scale factors** (RECOMMENDED)
@@ -168,10 +168,10 @@ The exported JSON will have this structure:
 The rotation offset quaternion is calculated using:
 
 ```
-q_offset = q_source * q_target^(-1)
+q_offset = q_source^(-1) * q_target
 ```
 
-This ensures that when the IK solver applies the offset, it correctly aligns the target robot's coordinate frame with the source robot's coordinate frame.
+This ensures that when the source motion is applied (`q_source * q_offset`), the result correctly maps to the target frame (`q_target`).
 
 ### Height-Based Scaling
 
@@ -209,19 +209,9 @@ Each body gets a scale factor based on its parent-child bone length ratio. This 
    - **Option A**: Create a new `lafan → new_robot` config by adapting the body correspondences from the G1 config
    - **Option B**: Chain the retargeting (less ideal): LAFAN → G1 motion → new_robot motion
 
-## Helper Script: Pre-Generate Skeleton Files
+## Loading Robot Poses
 
-To avoid needing the XML file every time you load the editor, you can pre-generate full skeleton JSON files:
-
-```bash
-conda activate gmr
-python -m ik_config_editor.generate_robot_pose_skeleton \
-    test_data/g1_t_pose.json \
-    g1.xml \
-    test_data/g1_t_pose_skeleton.json
-```
-
-Then load `g1_t_pose_skeleton.json` directly in the editor without needing the XML.
+The skeleton loader supports robot T-pose JSON files directly. When you load a T-pose file via the GUI, it will prompt for the robot XML file to compute forward kinematics and extract body positions/orientations.
 
 ## Troubleshooting
 
@@ -265,20 +255,15 @@ python -m ik_config_editor.cli \
     --target-xml assets/booster_t1/booster_t1.xml
 ```
 
-**Generate skeleton file first**:
+**Load T-pose files directly**:
 
 ```bash
-# Pre-generate skeletons
-python -m ik_config_editor.generate_robot_pose_skeleton \
-    test_data/g1_t_pose.json g1.xml test_data/g1_skeleton.json
-
-python -m ik_config_editor.generate_robot_pose_skeleton \
-    test_data/t1_t_pose.json assets/booster_t1/booster_t1.xml test_data/t1_skeleton.json
-
-# Then load directly
+# The editor will prompt for XML files when loading T-pose JSONs
 python -m ik_config_editor.cli \
-    --source test_data/g1_skeleton.json \
-    --target test_data/t1_skeleton.json
+    --source test_data/g1_t_pose.json \
+    --source-xml g1.xml \
+    --target test_data/t1_t_pose.json \
+    --target-xml assets/booster_t1/booster_t1.xml
 ```
 
 ## Next Steps

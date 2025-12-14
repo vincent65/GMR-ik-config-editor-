@@ -37,25 +37,13 @@ python -m ik_config_editor.cli \
 
 ### Preparing Skeleton Files
 
-You can either:
+You can load skeletons from:
 
-1. **Load MuJoCo XML directly** (recommended for robots)
-2. **Pre-generate JSON skeleton files** for faster loading
+1. **MuJoCo XML files** (recommended for robots) - loaded directly via the GUI or CLI
+2. **JSON skeleton files** - pre-extracted skeleton data
+3. **Robot T-pose JSON files** - with joint angles, requires the robot XML for forward kinematics
 
-To pre-generate skeleton JSON files:
-
-```bash
-# Generate robot skeleton from MuJoCo XML
-python ik_config_editor/generate_mjcf_skeleton.py \
-    assets/unitree_g1/unitree_g1.xml \
-    test_data/g1_skeleton.json
-
-# Generate SMPL-X skeleton from motion file
-python ik_config_editor/generate_smpl_skeleton.py \
-    --smplx_file path/to/motion.npz \
-    --smplx_body_model_path assets/body_models/smplx \
-    --output_file test_data/smplx_skeleton.json
-```
+For robot-to-robot retargeting, see `ROBOT_TO_ROBOT_GUIDE.md`.
 
 ### Workflow
 
@@ -142,14 +130,18 @@ python scripts/smplx_to_robot.py \
 
 3. **Verify**: Robot should move (even if imperfectly due to untuned offsets)
 
-## Limitations (Phase 1)
+## Automatic Calibration (Phase 2)
 
-- Rotation offsets are identity (may need manual tuning for correct limb orientations)
-- Position offsets are zero (may need adjustments for end effectors)
-- Weights use defaults (may need tuning for desired IK behavior)
-- Scale factors are 1.0 (may need adjustment if source/target sizes differ significantly)
+Enable these options in the GUI for better initial results:
 
-Phase 2 features will include automatic offset and scale calculation.
+- **☑ Auto-calculate rotation offsets**: Computes quaternion offsets using `q_offset = q_source^(-1) * q_target`
+- **☑ Auto-calculate scale factors**: Measures bone lengths and computes scaling ratios
+- **☑ Auto-suggest IK weights**: Sets appropriate position/rotation weights based on body type
+
+Without auto-calibration:
+- Rotation offsets default to identity (may need manual tuning)
+- Scale factors default to 1.0
+- Weights use simple defaults
 
 ## Architecture
 
@@ -159,8 +151,9 @@ ik_config_editor/
 ├── skeleton_loader.py        # Load skeletons from various sources
 ├── ik_config_generator.py    # Generate IK config JSON
 ├── ik_config_editor_app.py   # Main GUI application
-├── generate_mjcf_skeleton.py # Helper: Export MuJoCo skeleton to JSON
-└── generate_smpl_skeleton.py # Helper: Export SMPL-X skeleton to JSON
+├── auto_calibration.py       # Automatic rotation/scale calculation
+├── test_ik_config_quality.py # Validate generated IK configs
+└── validate_ik_config.py     # Config validation utilities
 ```
 
 ## Troubleshooting
